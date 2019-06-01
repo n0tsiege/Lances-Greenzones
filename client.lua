@@ -1,7 +1,4 @@
-local CustomRestriction = {
-  run   = function() end,
-  stop  = function() end,
-}
+
 
 local greenzones = {
   ["sspd"] = {
@@ -12,15 +9,23 @@ local greenzones = {
     restrictions = {
       blockattack = true, -- disables any type of attack and weapon usage.
       speedlimit  = nil, -- NOTE: Measurement is in MP/H. Change to a speed if enabled. Else change to nil to disable.
-      customrestriction.loop = false,
-      customrestriction.run = nil, 
-      -- Works with function defined inside variables (look at line one). 
-      -- Runs while/when player is inside the zone.
-      -- (customrestriction.loop = true => while player is inside.) 
-      -- (customrestriction.loop = false => when player goes inside.)
-      -- It's recommended that the function has a parameter for passing the zone's table (this key's value)
-      -- e.g. run = function(zone) end
-      customrestriction.stop = nil, -- Same as above, but runs once when the player leaves the zone. This also stops the loop of the run function if it is running.
+      customrestrictions = {
+          -- Enable/Disable run function to loop while inside the zone.
+        loop = false,
+          -- Works with function defined inside variables (look at line one). 
+          -- Runs while/when player is inside the zone.
+          -- (customrestriction.loop = true => while player is inside.) 
+          -- (customrestriction.loop = false => when player goes inside.)
+          -- It's recommended that the function has a parameter for passing the zone's table (this key's value)
+          -- e.g. run = function(zone) end
+        run = function(zone)
+          local restrictions = zone.restrictions
+          local location = zone.location
+        end, 
+          -- Same as above, but runs once when the player leaves the zone. This also stops the loop of the run function if it is running.
+        stop = function(zone) end, 
+      }
+
     },
   },
 }
