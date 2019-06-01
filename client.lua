@@ -1,98 +1,79 @@
+local inside_zone = false
 
+local greenzones = Config.Greenzones
 
-local greenzones = {
-  ["sspd"] = {
-    location = {x = 0.0, y = 0.0, z = 0.0},
-    diameter = (20 * 3.14159) -- the maximum width of the sphere. this is also the width on ground level. Multiply this by 3.14159 to have a better looking sphere, It's not required to do that however.
-    visabilitydistance = 25.0, -- the maximum distance from the circle's shell that the player is able to see. (reccomended distance is 25.0).
-    color = {r = 255, g = 255, b = 255, a = 0} -- The color of the zone's sphere (set a to equal 0 to be transparent).
-    restrictions = {
-      blockattack = true, -- disables any type of attack and weapon usage.
-      speedlimit  = nil, -- NOTE: Measurement is in MP/H. Change to a speed if enabled. Else change to nil to disable.
-      customrestrictions = {
-          -- Enable/Disable run function to loop while inside the zone.
-        loop = false,
-          -- Works with function defined inside variables (look at line one). 
-          -- Runs while/when player is inside the zone.
-          -- (customrestriction.loop = true => while player is inside.) 
-          -- (customrestriction.loop = false => when player goes inside.)
-          -- It's recommended that the function has a parameter for passing the zone's table (this key's value)
-          -- e.g. run = function(zone) end
-        run = function(zone)
-          local restrictions = zone.restrictions
-          local location = zone.location
-        end, 
-          -- Same as above, but runs once when the player leaves the zone. This also stops the loop of the run function if it is running.
-        stop = function(zone) end, 
-      }
-
-    },
-  },
-}
-
-local Config = {
-  
-}
-
-function ToggleGreenzone(zone)
+local function ShowInfo(text)
+  SetNotificationTextEntry("STRING")
+  AddTextComponentString(text)
+  DrawNotification(true, false)
 end
 
 Citizen.CreateThread(function()
-	while true do
+  while true do
     local playerPed = GetPlayerPed(-1)
     local plyCoords = GetEntityCoords(playerPed, false)
     for k, v in pairs(greenzones) do
       local location = vector3(v.location.x, v.location.y, v.location.z)
       if #(plyCoords - location) < (v.diameter) - (v.diameter / 150) then
-          -- Enforce Restrictions.
-          if (v.blockattack) then
-              SetPlayerCanDoDriveBy(player, false)
-              DisablePlayerFiring(player, true)
-              DisableControlAction(0, 140) -- Melee R
+        if (not inside_zone) then
+          local temp_append = ""
+          ShowInfo("~w~You are now entering a ~g~greenzone~w~.")
+          ShowInfo("You are ~r~not allowed~w~ to do any ~r~violent~w~ or ~r~illegal~w~ roleplay in this area.")
+          inside_zone = true
+          if (v.customrestrictions.enabled and v.customrestrictions.loop == false) then
+            Config.Greenzones[k].customrestrictions.run(v)
           end
-          if (v.speedlimit ~= nil && tonumber(v.speedlimit)) then
-            SetEntityMaxSpeed(GetVehiclePedIsIn(playerPed, false), tonumber(v.speedlimit) / 2.237)
-          end
-          if ()
-      elseif (inside_zone)
+        end
+        -- Enforce Restrictions.
+        if (v.restrictions.blockattack) then
+          SetEntityCanBeDamaged(playerPed, false)
+          SetPlayerCanDoDriveBy(playerPed, false)
+          DisablePlayerFiring(playerPed, true)
+          DisableControlAction(0, 140) -- Melee R
+        end
+        if (v.restrictions.speedlimit ~= nil and tonumber(v.restrictions.speedlimit)) then
+          SetEntityMaxSpeed(GetVehiclePedIsIn(playerPed, false), tonumber(v.restrictions.speedlimit) / 2.237)
+        end
+        if (v.customrestrictions.enabled and v.customrestrictions.loop == true) then
+          Config.Greenzones[k].customrestrictions.run(v)
+        end
+      elseif (inside_zone) then
         -- Remove Restrictions.
         -- The reason why we do inside_zone == true is so that if the first if statement fails,
         -- We can restore the normal functions outside of the zone without looping through this constantly.
 
         -- Since the natives used to restrict attacks are called per frame, we don't need to put anything here to reset that.
+        ShowInfo("~w~You are now leaving a ~g~greenzone~w~.")
+        ShowInfo("You are now ~g~allowed~w~ to do any ~g~violent~w~ or ~g~illegal~w~ roleplay outside the zone.")
 
+        SetEntityCanBeDamaged(playerPed, true)
         SetEntityMaxSpeed(GetVehiclePedIsIn(playerPed, false), 99999.9)
 
         -- NOTE: This doesn't increase the speed of vehicles.
         -- This only removes the cap/speedlimit that was applied while inside the restricted zone.
 
+        Config.Greenzones[k].customrestrictions.stop(v)
+
+        inside_zone = false
 
       end
     end
-		Citizen.Wait(0)
-	end
+    Citizen.Wait(0)
+  end
 end)
 
 Citizen.CreateThread(function()
-	while true do
+  while true do
     local playerPed = GetPlayerPed(-1)
     local plyCoords = GetEntityCoords(playerPed, false)
     for k, v in pairs(greenzones) do
       local location = vector3(v.location.x, v.location.y, v.location.z)
-      if (#(plyCoords - location) > (v.diameter) - (v.diameter / 150) - v.visabilitydistance) then
+      if #(plyCoords - location) < (v.diameter) - (v.diameter / 150) then
+        DrawMarker(28, v.location.x, v.location.y, v.location.z, 0, 0, 0, 0, 0, 0, v.diameter + 0.0, v.diameter + 0.0, v.diameter + 0.0, v.color.r, v.color.g, v.color.b, 0, 0, 0, 0, 0)
+      elseif (#(plyCoords - location) < (v.diameter) - (v.diameter / 150) + v.visabilitydistance) then
         DrawMarker(28, v.location.x, v.location.y, v.location.z, 0, 0, 0, 0, 0, 0, v.diameter + 0.0, v.diameter + 0.0, v.diameter + 0.0, v.color.r, v.color.g, v.color.b, v.color.a, 0, 0, 0, 0)
       end
     end
     Citizen.Wait(0)
-	end
-end)
-
-Citizen.CreateThread(function()
-	TriggerServerEvent("aop:UpdateClientAOP")
-	return
-end)
-
-RegisterNetEvent("aop:InitializeAOP")
-AddEventHandler("aop:InitializeAOP", function(zone)
-  ToggleGreenzone(zone)
+  end
 end)
