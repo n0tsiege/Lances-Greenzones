@@ -17,7 +17,11 @@ Citizen.CreateThread(function()
       if #(plyCoords - location) < (v.diameter) - (v.diameter / 150) then
         if (not inside_zone) then
           local temp_append = ""
-          ShowInfo("You are ~r~not allowed~w~ to do any ~r~violent~w~ or ~r~illegal~w~ roleplay in this area.")
+          -- ShowInfo("You are ~r~not allowed~w~ to do any ~r~violent~w~ or ~r~illegal~w~ roleplay in this area.")
+          exports['t-notify']:Alert({
+            style  =  'success',
+            message  =  'You have entered a safe zone!'
+          })
           inside_zone = true
           if (v.customrestrictions.enabled and v.customrestrictions.loop == false) then
             Config.Greenzones[k].customrestrictions.run(v)
@@ -42,8 +46,12 @@ Citizen.CreateThread(function()
         -- We can restore the normal functions outside of the zone without looping through this constantly.
 
         -- Since the natives used to restrict attacks are called per frame, we don't need to put anything here to reset that.
-        ShowInfo("You are ~g~allowed~w~ to do any ~g~violent~w~ or ~g~illegal~w~ roleplay in this area.")
-
+        -- ShowInfo("You are ~g~allowed~w~ to do any ~g~violent~w~ or ~g~illegal~w~ roleplay in this area.")
+          exports['t-notify']:Alert({
+          style  =  'error',
+          message  =  'You have exited a safe zone!'
+          })
+        
         SetEntityCanBeDamaged(playerPed, true)
         SetEntityMaxSpeed(GetVehiclePedIsIn(playerPed, false), 99999.9)
 
