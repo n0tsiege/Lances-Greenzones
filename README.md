@@ -4,7 +4,10 @@ Greenzones / Restricted Zones for FiveM. Disable shooting, slow down cars, and m
 
 For documentation, please browse the code.
 
+## Updates
+
+* Changed from GTA-style notification system to [Taso's](https://github.com/TasoOneAsia) t-notify
+* Updated outdated resource manifest (old __resource.lua > fxmanifest.lua
+
 ## Requirements
 [t-notify](https://github.com/TasoOneAsia/t-notify)
-
-Download the **latest release**, not the master branch.
